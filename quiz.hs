@@ -18,34 +18,31 @@ main = do
     study cards num
 
 
-studyList :: [Card] -> IO ()
-studyList [] = putStrLn "Done!"
-studyList (a:as) = do
+studyList :: [Card] -> Int -> Int -> IO ()
+studyList [] right wrong = putStrLn $ "You got " ++ show right ++ "/" ++ show (right +wrong) ++ " correct."
+studyList (a:as) right wrong = do
     printFront a
     _ <- getLine
     --can implement test of the back now
     --I'm not that interestd in this feature though
     --Just using this so that way I can press enter to see the english result
     printBack a
-    --here put something that will compile the words gotten wrong
-    --and put it in a file
-    --keep track of stats for all runs of this file and for the last 100 runs of this file
     result <- getLine
     if result /= "" then 
         do
             appendFile results ((showCard a) ++ "\n")
-            studyList as
+            studyList as right (wrong + 1)
         else
-            do 
-                studyList as
+            studyList as (right + 1) wrong
 
 study :: [Card] -> Int -> IO ()
 study cards num = do
     gen <- getStdGen
     let is =  randomList (1,length cards - 1) num 
     let indices = is gen
+    --should make sure that the input is within range of the length of the list
     let cardList = subset cards indices
-    studyList cardList
+    studyList cardList 0 0
 
 subset :: [Card] -> [Int] -> [Card]
 subset _ [] = []
@@ -90,5 +87,5 @@ printBack :: Card -> IO ()
 printBack (_, back) = putStrLn back
 
 showCard :: Card -> String
-showCard (a,b) = a ++ b
+showCard (a,b) = a ++ "\t" ++ b
 
