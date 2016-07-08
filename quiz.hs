@@ -41,7 +41,7 @@ study cards num = do
     let is =  randomList (1,length cards - 1) num 
     let indices = is gen
     --should make sure that the input is within range of the length of the list
-    let cardList = subset cards indices
+    let cardList = if num < length cards - 1 then subset cards indices else cards
     studyList cardList 0 0
 
 subset :: [Card] -> [Int] -> [Card]
