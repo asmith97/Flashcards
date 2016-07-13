@@ -9,6 +9,11 @@ type Card = (String, String)
 results :: String
 results = "/Users/alexsmith/Programming/Flashcards/results.txt"
 
+--First arg = the file to read
+--Second arg = if three args, then the file to store output in (if not specified, make there be a default)
+--Second/Third arg = if 2 args, then it's the number to display in the quiz, if 3 args, then the third arg is the number to display in the quiz
+--maybe have flags instead?
+--other potential arguments: which side of the card to display
 main :: IO ()
 main = do
     args <- getArgs
@@ -16,7 +21,6 @@ main = do
     let cards = fileToCards f
     let num = read (args !! 1) :: Int
     study cards num
-
 
 studyList :: [Card] -> Int -> Int -> IO ()
 studyList [] right wrong = putStrLn $ "You got " ++ show right ++ "/" ++ show (right +wrong) ++ " correct."
@@ -42,6 +46,7 @@ study cards num = do
     let indices = is gen
     --should make sure that the input is within range of the length of the list
     let cardList = if num < length cards - 1 then subset cards indices else cards
+    --get it to shuffle the card list even if it's using all of them
     studyList cardList 0 0
 
 subset :: [Card] -> [Int] -> [Card]
@@ -51,8 +56,6 @@ subset cards (a:as) = cards !! a : subset cards as
 --from http://stackoverflow.com/questions/9139649/how-to-generate-a-list-which-contains-a-given-number-of-random-numbers-within-a
 randomList :: (Random a, RandomGen g) => (a, a) -> Int -> g -> [a]
 randomList bnds n = take n . randomRs bnds
-
-
 
 isEnglishWord :: Char -> Bool
 isEnglishWord c = isAlphaNum c || c == ' ' || isPunctuation c
@@ -68,11 +71,27 @@ parser = do
     back <- munch isEnglishWord
     return (front, back)
 
+
+--might be able to just make this the parser
+hsvFormatParser :: ReadP Card
+hsvFormatParser = do
+    skipSpaces
+    front <- munch isChineseWord
+    skipSpaces
+    back <- munch isEnglishWord
+    skipSpaces
+    moreBack <- munch isEnglishWord
+    return (front, back ++ " " ++ moreBack) 
+
+
 runParser :: ReadP a -> ReadS a
 runParser = readP_to_S
 
 parse :: String -> Card
-parse str = fst . head $ runParser parser str
+parse str = fst . head $ runParser hsvFormatParser str
+
+parseHSV :: String -> Card
+parseHSV str = fst . head $ runParser hsvFormatParser str
 
 --have already read the file with readFile
 fileToCards :: String -> [Card]
