@@ -63,6 +63,12 @@ isEnglishWord c = isAlphaNum c || c == ' ' || isPunctuation c
 isChineseWord :: Char -> Bool
 isChineseWord c = isAlphaNum c || isPunctuation c
 
+isPinYin :: Char -> Bool
+isPinYin c = isEnglishWord c || c == '(' || c == ')'
+
+isSep :: Char -> Bool
+isSep c = c == '[' || c == ']' || c == '-'
+
 parser :: ReadP Card
 parser = do
     skipSpaces
@@ -82,6 +88,39 @@ hsvFormatParser = do
     skipSpaces
     moreBack <- munch isEnglishWord
     return (front, back ++ " " ++ moreBack) 
+
+--this does not work with the old format
+newFormatParser :: ReadP Card
+newFormatParser = do
+    skipSpaces
+    chinese <- munch isAlphaNum
+    skipSpaces
+    pinyin <- munch (\c -> isAlphaNum c || c == '(' || c == ')' || isSpace c)
+    skipSpaces
+    munch isSep
+    skipSpaces
+    english <- munch isEnglishWord
+    return (chinese ++ " " ++ pinyin, english)
+
+--seems like fst $ last (result of this parser) should work
+--fix these
+fParser :: ReadP [String]
+fParser = sepBy sideParser sepParser
+
+sideParser :: ReadP String
+sideParser = do
+    skipSpaces
+    side <- munch (\c -> isAlphaNum c || c == '(' || c == ')' || isSpace c || c == ';' || c == '.') --maybe just make it isNot '[' or '=]'
+    return side
+
+sepParser :: ReadP String
+sepParser = do
+    skipSpaces
+    satisfy (\c -> c == '[')
+    satisfy (\c -> c == '-')
+    satisfy (\c -> c == ']')
+    return "sep"
+
 
 
 runParser :: ReadP a -> ReadS a
